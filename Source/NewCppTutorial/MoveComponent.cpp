@@ -28,6 +28,8 @@ void UMoveComponent::BeginPlay()
 	MoveOffsetNorm.Normalize();
 	MaxDistance = MoveOffset.Length();
 
+	
+
 }
 
 
@@ -37,9 +39,36 @@ void UMoveComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
-	if (CurDistance >= MaxDistance || CurDistance <= 0.f)
-		MoveDirection *= -1.f;
-	CurDistance += DeltaTime * Speed * MoveDirection;
+
+	if (MoveEnable)
+	{
+		CurDistance += DeltaTime * Speed * MoveDirection;
+		if (CurDistance >= MaxDistance || CurDistance <= 0.f)
+		{
+			MoveDirection *= -1.f;
+			OnEndpointReached.Broadcast(CurDistance >= MaxDistance);
+			CurDistance = FMath::Clamp(CurDistance, 0.0f, MaxDistance);
+		}
+			
+	}
 	SetRelativeLocation(StartRelativeLocation + MoveOffsetNorm * CurDistance);
+}
+
+void UMoveComponent::EnableMovement(bool ShouldMove)
+{
+	MoveEnable = ShouldMove;
+	// check if ticking is required
+	SetComponentTickEnabled(MoveEnable);
+}
+
+void UMoveComponent::ResetMovement()
+{
+	CurDistance = 0.0f;
+	SetRelativeLocation(StartRelativeLocation);
+}
+
+void UMoveComponent::SetMovementDirection(int Direction)
+{
+	MoveDirection = Direction >= 1 ? 1 : -1;
 }
 
